@@ -38,7 +38,11 @@ export async function outputEntry(dest: string, configPath: string, collections:
     .replace(/\.[mc]?[jt]s$/i, '') // remove extension
 
   const entry: string[] = []
-  const dts: string[] = [`import config from '${configModPath}'\n`]
+  const dts: string[] = [
+    `import type { Result as ResultVelite } from 'velite'`,
+    `import config from '${configModPath}'\n`,
+    `export type ResultData = ResultVelite<NonNullable<typeof config.collections>>\n`,
+  ]
 
   // eslint-disable-next-line array-callback-return
   Object.entries(collections).map(([name, collection]) => {
