@@ -5,12 +5,12 @@ import { string } from './zod'
  * @param by unique by
  * @returns unique schema
  */
-export const unique = (by: string = 'global') =>
-  string().superRefine((value, { path, meta: { file, config }, addIssue }) => {
+export function unique(by: string = 'global') {
+  return string().superRefine((value, { path, meta: { file, config }, addIssue }) => {
     const key = `schemas:unique:${by}:${value}`
-    if (config.cache.has(key)) {
+    if (config.cache.has(key))
       addIssue({ code: 'custom', message: `duplicate value '${value}' in '${file.path}:${path.join('.')}'` })
-    } else {
+    else
       config.cache.set(key, file.path)
-    }
   })
+}

@@ -12,7 +12,7 @@ const MATTER_RE = /^---(?:\r?\n|\r)(?:([\s\S]*?)(?:\r?\n|\r))?---(?:\r?\n|\r|$)/
 export default defineLoader({
   // name: 'matter',
   test: /\.(md|mdx)$/,
-  load: async file => {
+  load: async (file) => {
     const value = file.toString().trim()
     const match = value.match(MATTER_RE)
     const data = match == null ? null : yaml.parse(match[1])
@@ -21,5 +21,5 @@ export default defineLoader({
     const hast = raw(toHast(mdast, { allowDangerousHtml: true }))
     const plain = toString(hast).replace(/\s+/g, ' ')
     return { data, content, plain }
-  }
+  },
 })

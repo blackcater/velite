@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { sep } from 'node:path'
 
 import { name } from '../package.json'
@@ -12,7 +13,7 @@ const logLevels: Record<LogLevel, number> = { debug: 0, info: 1, warn: 2, error:
 
 let _logLevel = logLevels.info
 
-const set = (level: LogLevel): void => {
+function set(level: LogLevel): void {
   _logLevel = logLevels[level]
 }
 
@@ -21,12 +22,13 @@ const set = (level: LogLevel): void => {
  * @param msg message
  * @returns flattened message
  */
-const flatten = (msg: unknown): unknown => {
-  if (typeof msg !== 'string') return msg
+function flatten(msg: unknown): unknown {
+  if (typeof msg !== 'string')
+    return msg
   return msg.replaceAll(process.cwd() + sep, '').replace(/\\/g, '/')
 }
 
-const print = (type: LogType, msg: unknown, begin?: number): void => {
+function print(type: LogType, msg: unknown, begin?: number): void {
   if (_logLevel <= logLevels[type]) {
     const time = begin ? `in ${(performance.now() - begin).toFixed(2)}ms` : ''
     const method = type === 'debug' ? 'log' : type

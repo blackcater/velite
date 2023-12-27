@@ -26,7 +26,7 @@ const resolved = new Map<string, VFile[]>()
  * @param clean clean output directories
  * @returns resolved config
  */
-const init = async (configFile?: string, clean?: boolean): Promise<Config> => {
+async function init(configFile?: string, clean?: boolean): Promise<Config> {
   const begin = performance.now()
 
   const config = await resolveConfig(configFile, clean)
@@ -58,7 +58,7 @@ const init = async (configFile?: string, clean?: boolean): Promise<Config> => {
  * @param schema data schema
  * @param changed changed file path (relative to content root)
  */
-const load = async (config: Config, path: string, schema: Schema, changed?: string): Promise<VFile> => {
+async function load(config: Config, path: string, schema: Schema, changed?: string): Promise<VFile> {
   path = normalize(path)
   if (changed != null && path !== changed && loaded.has(path)) {
     // skip file if changed file not match
@@ -70,13 +70,15 @@ const load = async (config: Config, path: string, schema: Schema, changed?: stri
   loaded.set(path, file)
 
   const loader = config.loaders.find(loader => loader.test.test(path))
-  if (loader == null) file.fail(`no loader found for '${path}'`)
+  if (loader == null)
+    file.fail(`no loader found for '${path}'`)
 
   file.value = await readFile(file.path)
   file.data = await loader!.load(file)
 
   const { data } = file.data
-  if (data == null) file.fail(`no data loaded from this file`)
+  if (data == null)
+    file.fail(`no data loaded from this file`)
 
   // may be one or more records in one file, such as yaml array or json array
   const isArr = Array.isArray(data)
@@ -87,10 +89,11 @@ const load = async (config: Config, path: string, schema: Schema, changed?: stri
       const path = isArr ? [index] : []
       // parse data with given schema
       const result = await schema.safeParseAsync(item, { path, meta: { file, config } })
-      if (result.success) return result.data
+      if (result.success)
+        return result.data
       // report error if parsing failed
       result.error.issues.forEach(issue => file.message(issue.message, { source: issue.path.join('.') }))
-    })
+    }),
   )
 
   // logger.log(`loaded '${path}' with ${parsed.length} records`)
@@ -104,7 +107,7 @@ const load = async (config: Config, path: string, schema: Schema, changed?: stri
  * @param changed changed file path (relative to content root)
  * @returns resolved result
  */
-const resolve = async (config: Config, changed?: string): Promise<Record<string, unknown>> => {
+async function resolve(config: Config, changed?: string): Promise<Record<string, unknown>> {
   const { root, output, collections, prepare, complete } = config
   const begin = performance.now()
 
@@ -123,7 +126,7 @@ const resolve = async (config: Config, changed?: string): Promise<Record<string,
       logger.log(`resolve ${paths.length} files matching '${pattern}'`, begin)
       resolved.set(name, files)
       return [name, files]
-    })
+    }),
   )
 
   const allFiles = entries.flatMap(([, files]) => files)
@@ -134,14 +137,16 @@ const resolve = async (config: Config, changed?: string): Promise<Record<string,
     entries.map(([name, files]): [string, any | any[]] => {
       const data = files.flatMap(file => file.result).filter(Boolean)
       if (collections[name].single) {
-        if (data.length === 0) throw new Error(`no data resolved for '${name}'`)
-        if (data.length > 1) logger.warn(`resolved ${data.length} ${name}, but expected single, using first one`)
+        if (data.length === 0)
+          throw new Error(`no data resolved for '${name}'`)
+        if (data.length > 1)
+          logger.warn(`resolved ${data.length} ${name}, but expected single, using first one`)
         else logger.log(`resolved 1 ${name}`)
         return [name, data[0]]
       }
       logger.log(`resolved ${data.length} ${name}`)
       return [name, data]
-    })
+    }),
   )
 
   let shouldOutput = true
@@ -155,7 +160,8 @@ const resolve = async (config: Config, changed?: string): Promise<Record<string,
   if (shouldOutput) {
     // emit result if not prevented
     await outputData(output.data, result)
-  } else {
+  }
+  else {
     logger.warn(`prevent output by 'prepare' callback`)
   }
 
@@ -177,7 +183,7 @@ const resolve = async (config: Config, changed?: string): Promise<Record<string,
 /**
  * watch files and rebuild on changes
  */
-const watch = async (config: Config) => {
+async function watch(config: Config) {
   const { watch } = await import('chokidar')
   const { root, collections, configPath } = config
 
@@ -190,15 +196,18 @@ const watch = async (config: Config) => {
     cwd: root,
     ignored: /(^|[\/\\])[\._]./, // ignore dot & underscore files
     ignoreInitial: true, // ignore initial scan
-    awaitWriteFinish: { stabilityThreshold: 50, pollInterval: 10 }
+    awaitWriteFinish: { stabilityThreshold: 50, pollInterval: 10 },
   }).on('all', async (event, filename) => {
-    if (event === 'addDir' || event === 'unlinkDir') return // ignore dir changes
-    if (filename == null) return
+    if (event === 'addDir' || event === 'unlinkDir')
+      return // ignore dir changes
+    if (filename == null)
+      return
     filename = join(root, filename)
     try {
       // remove changed file cache
       for (const [key, value] of config.cache.entries()) {
-        if (value === filename) config.cache.delete(key)
+        if (value === filename)
+          config.cache.delete(key)
       }
 
       if (filename === configPath) {
@@ -211,7 +220,8 @@ const watch = async (config: Config) => {
       logger.info(`changed: '${filename}', rebuilding...`)
       await resolve(config, filename)
       logger.info(`rebuild finished`, begin)
-    } catch (err) {
+    }
+    catch (err) {
       logger.warn(err)
     }
   })
@@ -247,7 +257,7 @@ export interface Options {
  * build contents
  * @param options build options
  */
-export const build = async (options: Options = {}): Promise<Record<string, unknown>> => {
+export async function build(options: Options = {}): Promise<Record<string, unknown>> {
   const begin = performance.now()
   const { config: configFile, clean, logLevel } = options
   logLevel != null && logger.set(logLevel)

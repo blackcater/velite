@@ -1,15 +1,17 @@
-import { util, ZodParsedType } from '../helpers/util'
-import { ZodErrorMap, ZodIssueCode } from '../ZodError'
+import { ZodParsedType, util } from '../helpers/util'
+import type { ZodErrorMap } from '../ZodError'
+import { ZodIssueCode } from '../ZodError'
 
 const errorMap: ZodErrorMap = (issue, _ctx) => {
   let message: string
   switch (issue.code) {
     case ZodIssueCode.invalid_type:
-      if (issue.received === ZodParsedType.undefined) {
+      if (issue.received === ZodParsedType.undefined)
         message = 'Required'
-      } else {
+
+      else
         message = `Expected ${issue.expected}, received ${issue.received}`
-      }
+
       break
     case ZodIssueCode.invalid_literal:
       message = `Invalid literal value, expected ${JSON.stringify(issue.expected, util.jsonStringifyReplacer)}`
@@ -40,25 +42,31 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
         if ('includes' in issue.validation) {
           message = `Invalid input: must include "${issue.validation.includes}"`
 
-          if (typeof issue.validation.position === 'number') {
+          if (typeof issue.validation.position === 'number')
             message = `${message} at one or more positions greater than or equal to ${issue.validation.position}`
-          }
-        } else if ('startsWith' in issue.validation) {
+        }
+        else if ('startsWith' in issue.validation) {
           message = `Invalid input: must start with "${issue.validation.startsWith}"`
-        } else if ('endsWith' in issue.validation) {
+        }
+        else if ('endsWith' in issue.validation) {
           message = `Invalid input: must end with "${issue.validation.endsWith}"`
-        } else {
+        }
+        else {
           util.assertNever(issue.validation)
         }
-      } else if (issue.validation !== 'regex') {
+      }
+      else if (issue.validation !== 'regex') {
         message = `Invalid ${issue.validation}`
-      } else {
+      }
+      else {
         message = 'Invalid'
       }
       break
     case ZodIssueCode.too_small:
-      if (issue.type === 'array') message = `Array must contain ${issue.exact ? 'exactly' : issue.inclusive ? `at least` : `more than`} ${issue.minimum} element(s)`
-      else if (issue.type === 'string') message = `String must contain ${issue.exact ? 'exactly' : issue.inclusive ? `at least` : `over`} ${issue.minimum} character(s)`
+      if (issue.type === 'array')
+        message = `Array must contain ${issue.exact ? 'exactly' : issue.inclusive ? `at least` : `more than`} ${issue.minimum} element(s)`
+      else if (issue.type === 'string')
+        message = `String must contain ${issue.exact ? 'exactly' : issue.inclusive ? `at least` : `over`} ${issue.minimum} character(s)`
       else if (issue.type === 'number')
         message = `Number must be ${issue.exact ? `exactly equal to ` : issue.inclusive ? `greater than or equal to ` : `greater than `}${issue.minimum}`
       else if (issue.type === 'date')
@@ -66,10 +74,14 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       else message = 'Invalid input'
       break
     case ZodIssueCode.too_big:
-      if (issue.type === 'array') message = `Array must contain ${issue.exact ? `exactly` : issue.inclusive ? `at most` : `less than`} ${issue.maximum} element(s)`
-      else if (issue.type === 'string') message = `String must contain ${issue.exact ? `exactly` : issue.inclusive ? `at most` : `under`} ${issue.maximum} character(s)`
-      else if (issue.type === 'number') message = `Number must be ${issue.exact ? `exactly` : issue.inclusive ? `less than or equal to` : `less than`} ${issue.maximum}`
-      else if (issue.type === 'bigint') message = `BigInt must be ${issue.exact ? `exactly` : issue.inclusive ? `less than or equal to` : `less than`} ${issue.maximum}`
+      if (issue.type === 'array')
+        message = `Array must contain ${issue.exact ? `exactly` : issue.inclusive ? `at most` : `less than`} ${issue.maximum} element(s)`
+      else if (issue.type === 'string')
+        message = `String must contain ${issue.exact ? `exactly` : issue.inclusive ? `at most` : `under`} ${issue.maximum} character(s)`
+      else if (issue.type === 'number')
+        message = `Number must be ${issue.exact ? `exactly` : issue.inclusive ? `less than or equal to` : `less than`} ${issue.maximum}`
+      else if (issue.type === 'bigint')
+        message = `BigInt must be ${issue.exact ? `exactly` : issue.inclusive ? `less than or equal to` : `less than`} ${issue.maximum}`
       else if (issue.type === 'date')
         message = `Date must be ${issue.exact ? `exactly` : issue.inclusive ? `smaller than or equal to` : `smaller than`} ${new Date(Number(issue.maximum))}`
       else message = 'Invalid input'

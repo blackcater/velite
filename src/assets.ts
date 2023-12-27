@@ -1,12 +1,13 @@
 import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { basename, extname, resolve } from 'node:path'
+import type { Buffer } from 'node:buffer'
 import sharp from 'sharp'
 import { visit } from 'unist-util-visit'
-
 import type { Element, Root as Hast } from 'hast'
 import type { Root as Mdast, Node } from 'mdast'
 import type { VFile } from 'vfile'
+
 import type { Output } from './types'
 
 /**
@@ -50,12 +51,17 @@ const ABS_PATH_RE = /^(\/[^/\\]|[a-zA-Z]:\\)/
  * @param url url to validate
  * @returns true if the url is a relative path
  */
-export const isRelativePath = (url: string): boolean => {
-  if (url.startsWith('#')) return false // ignore hash anchor
-  if (url.startsWith('?')) return false // ignore query
-  if (url.startsWith('//')) return false // ignore protocol relative urlet name
-  if (ABS_URL_RE.test(url)) return false // ignore absolute url
-  if (ABS_PATH_RE.test(url)) return false // ignore absolute path
+export function isRelativePath(url: string): boolean {
+  if (url.startsWith('#'))
+    return false // ignore hash anchor
+  if (url.startsWith('?'))
+    return false // ignore query
+  if (url.startsWith('//'))
+    return false // ignore protocol relative urlet name
+  if (ABS_URL_RE.test(url))
+    return false // ignore absolute url
+  if (ABS_PATH_RE.test(url))
+    return false // ignore absolute path
   return true
 }
 
@@ -64,10 +70,11 @@ export const isRelativePath = (url: string): boolean => {
  * @param buffer image buffer
  * @returns image object with blurDataURL
  */
-export const getImageMetadata = async (buffer: Buffer): Promise<Omit<Image, 'src'> | undefined> => {
+export async function getImageMetadata(buffer: Buffer): Promise<Omit<Image, 'src'> | undefined> {
   const img = sharp(buffer)
   const { width, height } = await img.metadata()
-  if (width == null || height == null) return
+  if (width == null || height == null)
+    return
   const aspectRatio = width / height
   const blurWidth = 8
   const blurHeight = Math.round(blurWidth / aspectRatio)
@@ -85,20 +92,14 @@ export const getImageMetadata = async (buffer: Buffer): Promise<Omit<Image, 'src
  * @param isImage process as image and return image object with blurDataURL
  * @returns reference public url or image object
  */
-export const processAsset = async <T extends true | undefined = undefined>(
-  input: string,
-  from: string,
-  filename: string,
-  baseUrl: string,
-  isImage?: T
-): Promise<T extends true ? Image : string> => {
+export async function processAsset<T extends true | undefined = undefined>(input: string, from: string, filename: string, baseUrl: string, isImage?: T): Promise<T extends true ? Image : string> {
   const path = resolve(from, '..', input)
   const buffer = await readFile(path)
   const ext = extname(input)
 
   const name = filename.replace(/\[(name|hash|ext)(:(\d+))?\]/g, (substring, ...groups) => {
     const key = groups[0]
-    const length = groups[2] == null ? undefined : parseInt(groups[2])
+    const length = groups[2] == null ? undefined : Number.parseInt(groups[2])
     switch (key) {
       case 'name':
         return basename(input, ext).slice(0, length)
@@ -117,10 +118,12 @@ export const processAsset = async <T extends true | undefined = undefined>(
   const src = baseUrl + name
   assets.set(name, path)
 
-  if (isImage !== true) return src as T extends true ? Image : string
+  if (isImage !== true)
+    return src as T extends true ? Image : string
 
   const metadata = await getImageMetadata(buffer)
-  if (metadata == null) throw new Error(`invalid image: ${from}`)
+  if (metadata == null)
+    throw new Error(`invalid image: ${from}`)
   return { src, ...metadata } as T extends true ? Image : string
 }
 
@@ -129,73 +132,77 @@ export type CopyLinkedFilesOptions = Omit<Output, 'data' | 'clean'>
 /**
  * rehype (markdown) plugin to copy linked files to public path and replace their urls with public urls
  */
-export const rehypeCopyLinkedFiles = (options: CopyLinkedFilesOptions) => async (tree: Hast, file: VFile) => {
-  const links = new Map<string, Element[]>()
-  const linkedPropertyNames = ['href', 'src', 'poster']
-  visit(tree, 'element', node => {
-    linkedPropertyNames.forEach(name => {
-      const value = node.properties[name]
-      if (typeof value === 'string' && isRelativePath(value)) {
-        const elements = links.get(value) ?? []
-        elements.push(node)
-        links.set(value, elements)
-      }
-    })
-  })
-  await Promise.all(
-    Array.from(links.entries()).map(async ([url, elements]) => {
-      const publicUrl = await processAsset(url, file.path, options.name, options.base)
-      if (publicUrl == null || publicUrl === url) return
-      elements.forEach(node => {
-        linkedPropertyNames.forEach(name => {
-          if (name in node.properties) {
-            node.properties[name] = publicUrl
-          }
-        })
+export function rehypeCopyLinkedFiles(options: CopyLinkedFilesOptions) {
+  return async (tree: Hast, file: VFile) => {
+    const links = new Map<string, Element[]>()
+    const linkedPropertyNames = ['href', 'src', 'poster']
+    visit(tree, 'element', (node) => {
+      linkedPropertyNames.forEach((name) => {
+        const value = node.properties[name]
+        if (typeof value === 'string' && isRelativePath(value)) {
+          const elements = links.get(value) ?? []
+          elements.push(node)
+          links.set(value, elements)
+        }
       })
     })
-  )
+    await Promise.all(
+      Array.from(links.entries()).map(async ([url, elements]) => {
+        const publicUrl = await processAsset(url, file.path, options.name, options.base)
+        if (publicUrl == null || publicUrl === url)
+          return
+        elements.forEach((node) => {
+          linkedPropertyNames.forEach((name) => {
+            if (name in node.properties)
+              node.properties[name] = publicUrl
+          })
+        })
+      }),
+    )
+  }
 }
 
 /**
  * remark (mdx) plugin to copy linked files to public path and replace their urls with public urls
  */
-export const remarkCopyLinkedFiles = (options: CopyLinkedFilesOptions) => async (tree: Mdast, file: VFile) => {
-  const links = new Map<string, Node[]>()
-  const linkedPropertyNames = ['href', 'src', 'poster']
-  visit(tree, ['link', 'image', 'definition'], (node: any) => {
-    if (isRelativePath(node.url)) {
-      const nodes = links.get(node.url) || []
-      nodes.push(node)
-      links.set(node.url, nodes)
-    }
-  })
-  visit(tree, 'mdxJsxFlowElement', node => {
-    node.attributes.forEach((attr: any) => {
-      if (linkedPropertyNames.includes(attr.name) && typeof attr.value === 'string' && isRelativePath(attr.value)) {
-        const nodes = links.get(attr.value) || []
+export function remarkCopyLinkedFiles(options: CopyLinkedFilesOptions) {
+  return async (tree: Mdast, file: VFile) => {
+    const links = new Map<string, Node[]>()
+    const linkedPropertyNames = ['href', 'src', 'poster']
+    visit(tree, ['link', 'image', 'definition'], (node: any) => {
+      if (isRelativePath(node.url)) {
+        const nodes = links.get(node.url) || []
         nodes.push(node)
-        links.set(attr.value, nodes)
+        links.set(node.url, nodes)
       }
     })
-  })
-  await Promise.all(
-    Array.from(links.entries()).map(async ([url, nodes]) => {
-      const publicUrl = await processAsset(url, file.path, options.name, options.base)
-      if (publicUrl == null || publicUrl === url) return
-      nodes.forEach((node: any) => {
-        if (node.url === url) {
-          node.url = publicUrl
-          return
+    visit(tree, 'mdxJsxFlowElement', (node) => {
+      node.attributes.forEach((attr: any) => {
+        if (linkedPropertyNames.includes(attr.name) && typeof attr.value === 'string' && isRelativePath(attr.value)) {
+          const nodes = links.get(attr.value) || []
+          nodes.push(node)
+          links.set(attr.value, nodes)
         }
-        node.attributes.forEach((attr: any) => {
-          linkedPropertyNames.forEach(name => {
-            if (attr.name === name && attr.value === url) {
-              attr.value = publicUrl
-            }
-          })
-        })
       })
     })
-  )
+    await Promise.all(
+      Array.from(links.entries()).map(async ([url, nodes]) => {
+        const publicUrl = await processAsset(url, file.path, options.name, options.base)
+        if (publicUrl == null || publicUrl === url)
+          return
+        nodes.forEach((node: any) => {
+          if (node.url === url) {
+            node.url = publicUrl
+            return
+          }
+          node.attributes.forEach((attr: any) => {
+            linkedPropertyNames.forEach((name) => {
+              if (attr.name === name && attr.value === url)
+                attr.value = publicUrl
+            })
+          })
+        })
+      }),
+    )
+  }
 }

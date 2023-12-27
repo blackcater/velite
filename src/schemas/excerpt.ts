@@ -15,10 +15,11 @@ export interface ExcerptOptions {
   length?: number
 }
 
-export const excerpt = ({ length = 260 }: ExcerptOptions = {}) =>
-  custom<string>().transform<string>(async (value, { meta: { file } }) => {
-    if (value == null && file.data.plain != null) {
+export function excerpt({ length = 260 }: ExcerptOptions = {}) {
+  return custom<string>().transform<string>(async (value, { meta: { file } }) => {
+    if (value == null && file.data.plain != null)
       value = file.data.plain
-    }
+
     return value.slice(0, length)
   })
+}

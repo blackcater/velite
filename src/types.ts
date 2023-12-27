@@ -2,6 +2,7 @@ import type { CompileOptions } from '@mdx-js/mdx'
 import type { PluggableList } from 'unified'
 import type { Data, VFile } from 'vfile'
 import type { Schema } from './schemas'
+import type { ZodTypeDef } from './schemas/zod'
 
 type Promisable<T> = T | Promise<T>
 
@@ -141,7 +142,7 @@ export interface Output {
 /**
  * Collection options
  */
-export interface Collection {
+export interface Collection<Input = any, Def extends ZodTypeDef = ZodTypeDef, Output = Input> {
   /**
    * Schema name (singular), for types generation
    * @example
@@ -170,7 +171,7 @@ export interface Collection {
    *   content: s.string() // from markdown body
    * })
    */
-  schema: Schema
+  schema: Schema<Input, Def, Output>
 }
 
 /**
@@ -279,7 +280,7 @@ export interface Config extends Readonly<UserConfig> {
 /**
  * Define a collection (identity function for type inference)
  */
-export const defineCollection = (collection: Collection) => collection
+export const defineCollection = <Input, Def extends ZodTypeDef, Output = Input>(collection: Collection<Input, Def, Output>) => collection
 
 /**
  * Define a loader (identity function for type inference)

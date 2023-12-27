@@ -1,3 +1,5 @@
+import type { VFile } from 'vfile'
+import type { Config } from '../types'
 import { excerpt } from './excerpt'
 import { file } from './file'
 import { image } from './image'
@@ -8,9 +10,6 @@ import { metadata } from './metadata'
 import { slug } from './slug'
 import { unique } from './unique'
 import * as z from './zod'
-
-import type { VFile } from 'vfile'
-import type { Config } from '../types'
 
 declare module './zod' {
   interface ZodMeta {
@@ -29,7 +28,7 @@ export const s = {
   metadata,
   excerpt,
   markdown,
-  mdx
+  mdx,
 }
 
 export { z } // keep z for backward compatibility

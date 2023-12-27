@@ -38,10 +38,10 @@ export namespace partialUtil {
             ? {
                 [k in keyof Items]: Items[k] extends ZodTypeAny ? DeepPartial<Items[k]> : never
               } extends infer PI
-              ? PI extends ZodTupleItems
-                ? ZodTuple<PI>
+                ? PI extends ZodTupleItems
+                  ? ZodTuple<PI>
+                  : never
                 : never
-              : never
             : T
   //  {
   //     // optional: T extends ZodOptional<ZodTypeAny> ? T : ZodOptional<T>;

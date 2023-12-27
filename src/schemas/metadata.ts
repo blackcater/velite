@@ -30,22 +30,22 @@ const cjRanges = [
   [13056, 13144],
   [65382, 65392],
   [65393, 65438],
-  [110592, 110593]
+  [110592, 110593],
 ]
 
-const isCjChar = (char: string) => {
+function isCjChar(char: string) {
   const charCode = char.codePointAt(0) ?? 0
   return cjRanges.some(([from, to]) => charCode >= from && charCode < to)
 }
 
-const wordLength = (str: string) => {
+function wordLength(str: string) {
   // or: https://github.com/lodash/lodash/blob/main/src/words.ts
   const reWord = /['\u2019]?([a-zA-Z]+(?:['\u2019]?[a-zA-Z]+)*)/g
   const words = str.match(reWord) || []
   return words.length
 }
 
-const getMetadata = (text: string): Metadata => {
+function getMetadata(text: string): Metadata {
   // https://github.com/gatsbyjs/gatsby/blob/master/packages/gatsby-transformer-remark/src/utils/time-to-read.js
   const avgWPM = 265
 
@@ -53,11 +53,10 @@ const getMetadata = (text: string): Metadata => {
   const cjChars = []
 
   for (const char of text) {
-    if (isCjChar(char)) {
+    if (isCjChar(char))
       cjChars.push(char)
-    } else {
+    else
       latinChars.push(char)
-    }
   }
 
   // Multiply non-latin character string length by 0.56, because
@@ -68,7 +67,7 @@ const getMetadata = (text: string): Metadata => {
 
   return {
     readingTime: time === 0 ? 1 : time,
-    wordCount: wordCount
+    wordCount,
   }
 }
 
@@ -86,10 +85,11 @@ export interface Metadata {
   wordCount: number
 }
 
-export const metadata = () =>
-  custom<string>().transform<Metadata>(async (value, { meta: { file } }) => {
-    if (value == null && file.data.plain != null) {
+export function metadata() {
+  return custom<string>().transform<Metadata>(async (value, { meta: { file } }) => {
+    if (value == null && file.data.plain != null)
       value = file.data.plain
-    }
+
     return getMetadata(value)
   })
+}

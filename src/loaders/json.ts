@@ -4,6 +4,6 @@ export default defineLoader({
   // name: 'json',
   test: /\.json$/,
   load: file => ({
-    data: JSON.parse(file.toString())
-  })
+    data: JSON.parse(file.toString()),
+  }),
 })

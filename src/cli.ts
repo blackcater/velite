@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+import process from 'node:process'
 import mri from 'mri'
 
 import { name, version } from '../package.json'
@@ -8,7 +10,7 @@ const argv = process.argv.slice(2)
 
 const { _, ...options } = mri(argv, {
   alias: { c: 'config', h: 'help', v: 'version' },
-  boolean: ['clean', 'watch', 'verbose', 'silent', 'debug']
+  boolean: ['clean', 'watch', 'verbose', 'silent', 'debug'],
 })
 
 const command = _[0] ?? 'build'
@@ -45,8 +47,9 @@ Options:
 const logLevel = options.silent ? 'silent' : options.verbose ? 'debug' : 'info'
 options.watch = command === 'dev' || options.watch
 
-build({ ...options, logLevel }).catch(err => {
+build({ ...options, logLevel }).catch((err) => {
   logger.error(err.message)
-  if (options.debug) throw err
+  if (options.debug)
+    throw err
   process.exit(1)
 })

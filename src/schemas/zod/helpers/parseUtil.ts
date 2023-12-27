@@ -4,12 +4,12 @@ import defaultErrorMap from '../locales/en'
 import type { IssueData, ZodErrorMap, ZodIssue } from '../ZodError'
 import type { ZodParsedType } from './util'
 
-export const makeIssue = (params: { data: any; path: (string | number)[]; errorMaps: ZodErrorMap[]; issueData: IssueData }): ZodIssue => {
+export function makeIssue(params: { data: any, path: (string | number)[], errorMaps: ZodErrorMap[], issueData: IssueData }): ZodIssue {
   const { data, path, errorMaps, issueData } = params
   const fullPath = [...path, ...(issueData.path || [])]
   const fullIssue = {
     ...issueData,
-    path: fullPath
+    path: fullPath,
   }
 
   let errorMessage = ''
@@ -17,14 +17,13 @@ export const makeIssue = (params: { data: any; path: (string | number)[]; errorM
     .filter(m => !!m)
     .slice()
     .reverse() as ZodErrorMap[]
-  for (const map of maps) {
+  for (const map of maps)
     errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message
-  }
 
   return {
     ...issueData,
     path: fullPath,
-    message: issueData.message || errorMessage
+    message: issueData.message || errorMessage,
   }
 }
 
@@ -32,7 +31,7 @@ export interface ZodMeta {
   [key: string | number | symbol]: unknown
 }
 
-export type ParseParams = {
+export interface ParseParams {
   path: (string | number)[]
   meta: ZodMeta
   errorMap: ZodErrorMap
@@ -57,7 +56,7 @@ export interface ParseContext {
   readonly parsedType: ZodParsedType
 }
 
-export type ParseInput = {
+export interface ParseInput {
   data: any
   path: (string | number)[]
   meta: ZodMeta
@@ -66,49 +65,54 @@ export type ParseInput = {
 
 export function addIssueToContext(ctx: ParseContext, issueData: IssueData): void {
   const issue = makeIssue({
-    issueData: issueData,
+    issueData,
     data: ctx.data,
     path: ctx.path,
     errorMaps: [
       ctx.common.contextualErrorMap, // contextual error map is first priority
       ctx.schemaErrorMap, // then schema-bound map if available
       getErrorMap(), // then global override map
-      defaultErrorMap // then global default map
-    ].filter(x => !!x) as ZodErrorMap[]
+      defaultErrorMap, // then global default map
+    ].filter(x => !!x) as ZodErrorMap[],
   })
   ctx.common.issues.push(issue)
 }
 
-export type ObjectPair = {
+export interface ObjectPair {
   key: SyncParseReturnType<any>
   value: SyncParseReturnType<any>
 }
 export class ParseStatus {
   value: 'aborted' | 'dirty' | 'valid' = 'valid'
   dirty() {
-    if (this.value === 'valid') this.value = 'dirty'
+    if (this.value === 'valid')
+      this.value = 'dirty'
   }
+
   abort() {
-    if (this.value !== 'aborted') this.value = 'aborted'
+    if (this.value !== 'aborted')
+      this.value = 'aborted'
   }
 
   static mergeArray(status: ParseStatus, results: SyncParseReturnType<any>[]): SyncParseReturnType {
     const arrayValue: any[] = []
     for (const s of results) {
-      if (s.status === 'aborted') return INVALID
-      if (s.status === 'dirty') status.dirty()
+      if (s.status === 'aborted')
+        return INVALID
+      if (s.status === 'dirty')
+        status.dirty()
       arrayValue.push(s.value)
     }
 
     return { status: status.value, value: arrayValue }
   }
 
-  static async mergeObjectAsync(status: ParseStatus, pairs: { key: ParseReturnType<any>; value: ParseReturnType<any> }[]): Promise<SyncParseReturnType<any>> {
+  static async mergeObjectAsync(status: ParseStatus, pairs: { key: ParseReturnType<any>, value: ParseReturnType<any> }[]): Promise<SyncParseReturnType<any>> {
     const syncPairs: ObjectPair[] = []
     for (const pair of pairs) {
       syncPairs.push({
         key: await pair.key,
-        value: await pair.value
+        value: await pair.value,
       })
     }
     return ParseStatus.mergeObjectSync(status, syncPairs)
@@ -120,19 +124,22 @@ export class ParseStatus {
       key: SyncParseReturnType<any>
       value: SyncParseReturnType<any>
       alwaysSet?: boolean
-    }[]
+    }[],
   ): SyncParseReturnType {
     const finalObject: any = {}
     for (const pair of pairs) {
       const { key, value } = pair
-      if (key.status === 'aborted') return INVALID
-      if (value.status === 'aborted') return INVALID
-      if (key.status === 'dirty') status.dirty()
-      if (value.status === 'dirty') status.dirty()
+      if (key.status === 'aborted')
+        return INVALID
+      if (value.status === 'aborted')
+        return INVALID
+      if (key.status === 'dirty')
+        status.dirty()
+      if (value.status === 'dirty')
+        status.dirty()
 
-      if (key.value !== '__proto__' && (typeof value.value !== 'undefined' || pair.alwaysSet)) {
+      if (key.value !== '__proto__' && (typeof value.value !== 'undefined' || pair.alwaysSet))
         finalObject[key.value] = value.value
-      }
     }
 
     return { status: status.value, value: finalObject }
@@ -143,15 +150,15 @@ export interface ParseResult {
   data: any
 }
 
-export type INVALID = { status: 'aborted' }
+export interface INVALID { status: 'aborted' }
 export const INVALID: INVALID = Object.freeze({
-  status: 'aborted'
+  status: 'aborted',
 })
 
-export type DIRTY<T> = { status: 'dirty'; value: T }
+export interface DIRTY<T> { status: 'dirty', value: T }
 export const DIRTY = <T>(value: T): DIRTY<T> => ({ status: 'dirty', value })
 
-export type OK<T> = { status: 'valid'; value: T }
+export interface OK<T> { status: 'valid', value: T }
 export const OK = <T>(value: T): OK<T> => ({ status: 'valid', value })
 
 export type SyncParseReturnType<T = any> = OK<T> | DIRTY<T> | INVALID

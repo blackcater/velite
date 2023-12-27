@@ -16,20 +16,20 @@ export default defineConfig([
     input: ['src/index.ts', 'src/cli.ts'],
     output: {
       dir: 'dist',
-      chunkFileNames: 'velite-[hash].js'
+      chunkFileNames: 'velite-[hash].js',
     },
     external,
     plugins: [
       json(),
       commonjs(),
       nodeResolve(),
-      esbuild({ target: 'node18' })
-    ]
+      esbuild({ target: 'node18' }),
+    ],
   },
   {
     input: 'src/index.ts',
     output: {
-      file: 'dist/index.d.ts'
+      file: 'dist/index.d.ts',
     },
     external,
     plugins: [
@@ -39,13 +39,12 @@ export default defineConfig([
         generateBundle: (_, bundle) => {
           for (const fileName in bundle) {
             const chunk = bundle[fileName]
-            if (chunk.type === 'chunk') {
-              chunk.code = chunk.code.replace(/\ndeclare module ['"].+['"] {([^]+?)\n}/g, "$1")
+            if (chunk.type === 'chunk')
+              chunk.code = chunk.code.replace(/\ndeclare module ['"].+['"] {([^]+?)\n}/g, '$1')
               // (_, inner) => inner.split('\n').map(line => line.replace(/^    /, '')).join('\n')
-            }
           }
-        }
-      }
-    ]
-  }
+        },
+      },
+    ],
+  },
 ])

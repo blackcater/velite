@@ -6,14 +6,13 @@ import remarkRehype from 'remark-rehype'
 import { unified } from 'unified'
 import { visit } from 'unist-util-visit'
 
-import { rehypeCopyLinkedFiles } from '../assets'
-import { custom } from './zod'
-
 import type { Root as Mdast } from 'mdast'
 import type { Plugin } from 'unified'
+import { rehypeCopyLinkedFiles } from '../assets'
 import type { MarkdownOptions } from '../types'
+import { custom } from './zod'
 
-const remarkRemoveComments: Plugin<[], Mdast> = () => tree => {
+const remarkRemoveComments: Plugin<[], Mdast> = () => (tree) => {
   visit(tree, 'html', (node, index, parent) => {
     if (node.value.match(/<!--([\s\S]*?)-->/g)) {
       parent!.children.splice(index!, 1)
@@ -22,20 +21,24 @@ const remarkRemoveComments: Plugin<[], Mdast> = () => tree => {
   })
 }
 
-export const markdown = (options: MarkdownOptions = {}) =>
-  custom<string>().transform<string>(async (value, { meta: { file, config }, addIssue }) => {
-    if (value == null && file.data.content != null) {
+export function markdown(options: MarkdownOptions = {}) {
+  return custom<string>().transform<string>(async (value, { meta: { file, config }, addIssue }) => {
+    if (value == null && file.data.content != null)
       value = file.data.content
-    }
 
     const { remarkPlugins = [], rehypePlugins = [] } = config.markdown ?? {}
     const { gfm = true, removeComments = true, copyLinkedFiles = true } = { ...config.markdown, ...options }
 
-    if (gfm) remarkPlugins.push(remarkGfm) // support gfm (autolink literals, footnotes, strikethrough, tables, tasklists).
-    if (removeComments) remarkPlugins.push(remarkRemoveComments) // remove html comments
-    if (options.remarkPlugins != null) remarkPlugins.push(...options.remarkPlugins) // apply remark plugins
-    if (copyLinkedFiles) rehypePlugins.push([rehypeCopyLinkedFiles, config.output]) // copy linked files to public path and replace their urls with public urls
-    if (options.rehypePlugins != null) rehypePlugins.push(...options.rehypePlugins) // apply rehype plugins
+    if (gfm)
+      remarkPlugins.push(remarkGfm) // support gfm (autolink literals, footnotes, strikethrough, tables, tasklists).
+    if (removeComments)
+      remarkPlugins.push(remarkRemoveComments) // remove html comments
+    if (options.remarkPlugins != null)
+      remarkPlugins.push(...options.remarkPlugins) // apply remark plugins
+    if (copyLinkedFiles)
+      rehypePlugins.push([rehypeCopyLinkedFiles, config.output]) // copy linked files to public path and replace their urls with public urls
+    if (options.rehypePlugins != null)
+      rehypePlugins.push(...options.rehypePlugins) // apply rehype plugins
 
     try {
       const html = await unified()
@@ -47,8 +50,10 @@ export const markdown = (options: MarkdownOptions = {}) =>
         .use(rehypeStringify) // serialize html syntax tree
         .process({ value, path: file.path })
       return html.toString()
-    } catch (err: any) {
+    }
+    catch (err: any) {
       addIssue({ code: 'custom', message: err.message })
       return value
     }
   })
+}

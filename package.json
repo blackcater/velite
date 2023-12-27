@@ -1,7 +1,19 @@
 {
   "name": "velite",
+  "type": "module",
   "version": "0.1.0-alpha.52",
+  "packageManager": "pnpm@8.12.1",
   "description": "Turns Markdown / MDX, YAML, JSON, or other files into app's data layer with type-safe schema.",
+  "author": "zce <w@zce.me> (https://zce.me)",
+  "license": "MIT",
+  "homepage": "https://velite.js.org/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zce/velite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zce/velite/issues"
+  },
   "keywords": [
     "contentlayer",
     "headless-cms",
@@ -12,38 +24,37 @@
     "cli",
     "zce"
   ],
-  "repository": "zce/velite",
-  "license": "MIT",
-  "author": "zce <w@zce.me> (https://zce.me)",
-  "type": "module",
-  "exports": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "bin": "bin/velite.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "velite": "bin/velite.js"
+  },
   "files": [
+    "*.d.ts",
     "dist"
   ],
+  "engines": {
+    "node": "^18.0.0 || >=20.0.0"
+  },
   "scripts": {
-    "build": "tsc && rollup -c",
+    "build": "pnpm clean && tsc && rollup -c",
     "test": "cd examples/basic && pnpm build && cd ../nextjs && pnpm build",
     "docs:dev": "cd docs && pnpm dev",
     "docs:build": "cd docs && pnpm build",
+    "clean": "rimraf dist",
     "format": "prettier . --write"
   },
   "dependencies": {
-    "esbuild": "^0.19.9",
-    "sharp": "^0.33.0"
-  },
-  "devDependencies": {
     "@mdx-js/mdx": "^3.0.0",
-    "@rollup/plugin-commonjs": "^25.0.7",
-    "@rollup/plugin-json": "^6.0.1",
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "@types/hast": "^3.0.3",
-    "@types/mdast": "^4.0.3",
-    "@types/micromatch": "^4.0.6",
-    "@types/node": "^20.10.4",
-    "@zce/prettier-config": "^0.2.0",
     "chokidar": "^3.5.3",
+    "esbuild": "^0.19.10",
     "fast-glob": "^3.3.2",
     "hast-util-raw": "^9.0.1",
     "hast-util-to-string": "^3.0.0",
@@ -51,24 +62,34 @@
     "mdast-util-to-hast": "^13.0.2",
     "micromatch": "^4.0.5",
     "mri": "^1.2.0",
-    "prettier": "^3.1.1",
+    "pascalcase": "^2.0.0",
     "rehype-raw": "^7.0.0",
     "rehype-stringify": "^10.0.0",
     "remark-gfm": "^4.0.0",
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.0.0",
-    "rollup": "^4.7.0",
-    "rollup-plugin-dts": "^6.1.0",
-    "rollup-plugin-esbuild": "^6.1.0",
-    "typescript": "^5.3.3",
+    "sharp": "^0.33.1",
     "unified": "^11.0.4",
     "unist-util-visit": "^5.0.0",
     "vfile": "^6.0.1",
     "vfile-reporter": "^8.1.0",
     "yaml": "^2.3.4"
   },
-  "packageManager": "pnpm@8.12.1",
-  "engines": {
-    "node": "^18.17.0 || >=20.3.0"
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@types/hast": "^3.0.3",
+    "@types/mdast": "^4.0.3",
+    "@types/micromatch": "^4.0.6",
+    "@types/node": "^20.10.5",
+    "@types/pascalcase": "^1.0.3",
+    "@zce/prettier-config": "^0.2.0",
+    "prettier": "^3.1.1",
+    "rimraf": "^5.0.5",
+    "rollup": "^4.9.1",
+    "rollup-plugin-dts": "^6.1.0",
+    "rollup-plugin-esbuild": "^6.1.0",
+    "typescript": "^5.3.3"
   }
 }

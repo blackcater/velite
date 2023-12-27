@@ -12,46 +12,47 @@ export namespace util {
   export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>
   export type MakePartial<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
 
-  export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(items: U): { [k in U[number]]: k } => {
+  export function arrayToEnum<T extends string, U extends [T, ...T[]]>(items: U): { [k in U[number]]: k } {
     const obj: any = {}
-    for (const item of items) {
+    for (const item of items)
       obj[item] = item
-    }
+
     return obj as any
   }
 
-  export const getValidEnumValues = (obj: any) => {
+  export function getValidEnumValues(obj: any) {
     const validKeys = objectKeys(obj).filter((k: any) => typeof obj[obj[k]] !== 'number')
     const filtered: any = {}
-    for (const k of validKeys) {
+    for (const k of validKeys)
       filtered[k] = obj[k]
-    }
+
     return objectValues(filtered)
   }
 
-  export const objectValues = (obj: any) => {
-    return objectKeys(obj).map(function (e) {
+  export function objectValues(obj: any) {
+    return objectKeys(obj).map((e) => {
       return obj[e]
     })
   }
 
-  export const objectKeys: ObjectConstructor['keys'] =
-    typeof Object.keys === 'function' // eslint-disable-line ban/ban
+  export const objectKeys: ObjectConstructor['keys']
+    = typeof Object.keys === 'function' // eslint-disable-line ban/ban
       ? (obj: any) => Object.keys(obj) // eslint-disable-line ban/ban
       : (object: any) => {
           const keys = []
           for (const key in object) {
-            if (Object.prototype.hasOwnProperty.call(object, key)) {
+            if (Object.prototype.hasOwnProperty.call(object, key))
               keys.push(key)
-            }
           }
           return keys
         }
 
-  export const find = <T>(arr: T[], checker: (arg: T) => any): T | undefined => {
+  export function find<T>(arr: T[], checker: (arg: T) => any): T | undefined {
     for (const item of arr) {
-      if (checker(item)) return item
+      if (checker(item))
+        return item
     }
+
     return undefined
   }
 
@@ -60,8 +61,8 @@ export namespace util {
 
   export type noUndefined<T> = T extends undefined ? never : T
 
-  export const isInteger: NumberConstructor['isInteger'] =
-    typeof Number.isInteger === 'function'
+  export const isInteger: NumberConstructor['isInteger']
+    = typeof Number.isInteger === 'function'
       ? val => Number.isInteger(val) // eslint-disable-line ban/ban
       : val => typeof val === 'number' && isFinite(val) && Math.floor(val) === val
 
@@ -69,10 +70,10 @@ export namespace util {
     return array.map(val => (typeof val === 'string' ? `'${val}'` : val)).join(separator)
   }
 
-  export const jsonStringifyReplacer = (_: string, value: any): any => {
-    if (typeof value === 'bigint') {
+  export function jsonStringifyReplacer(_: string, value: any): any {
+    if (typeof value === 'bigint')
       return value.toString()
-    }
+
     return value
   }
 }
@@ -94,7 +95,7 @@ export namespace objectUtil {
 
   export type addQuestionMarks<
     T extends object,
-    R extends keyof T = requiredKeys<T>
+    R extends keyof T = requiredKeys<T>,
     // O extends keyof T = optionalKeys<T>
   > = Pick<Required<T>, R> & Partial<T>
   //  = { [k in O]?: T[k] } & { [k in R]: T[k] };
@@ -110,10 +111,10 @@ export namespace objectUtil {
     [k in noNeverKeys<T>]: k extends keyof T ? T[k] : never
   }>
 
-  export const mergeShapes = <U, T>(first: U, second: T): T & U => {
+  export function mergeShapes<U, T>(first: U, second: T): T & U {
     return {
       ...first,
-      ...second // second overwrites first
+      ...second, // second overwrites first
     }
   }
 
@@ -140,12 +141,12 @@ export const ZodParsedType = util.arrayToEnum([
   'void',
   'never',
   'map',
-  'set'
+  'set',
 ])
 
 export type ZodParsedType = keyof typeof ZodParsedType
 
-export const getParsedType = (data: any): ZodParsedType => {
+export function getParsedType(data: any): ZodParsedType {
   const t = typeof data
 
   switch (t) {
@@ -171,24 +172,24 @@ export const getParsedType = (data: any): ZodParsedType => {
       return ZodParsedType.symbol
 
     case 'object':
-      if (Array.isArray(data)) {
+      if (Array.isArray(data))
         return ZodParsedType.array
-      }
-      if (data === null) {
+
+      if (data === null)
         return ZodParsedType.null
-      }
-      if (data.then && typeof data.then === 'function' && data.catch && typeof data.catch === 'function') {
+
+      if (data.then && typeof data.then === 'function' && data.catch && typeof data.catch === 'function')
         return ZodParsedType.promise
-      }
-      if (typeof Map !== 'undefined' && data instanceof Map) {
+
+      if (typeof Map !== 'undefined' && data instanceof Map)
         return ZodParsedType.map
-      }
-      if (typeof Set !== 'undefined' && data instanceof Set) {
+
+      if (typeof Set !== 'undefined' && data instanceof Set)
         return ZodParsedType.set
-      }
-      if (typeof Date !== 'undefined' && data instanceof Date) {
+
+      if (typeof Date !== 'undefined' && data instanceof Date)
         return ZodParsedType.date
-      }
+
       return ZodParsedType.object
 
     default:
